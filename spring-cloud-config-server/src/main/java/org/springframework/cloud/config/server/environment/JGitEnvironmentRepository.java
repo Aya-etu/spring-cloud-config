@@ -90,6 +90,8 @@ public class JGitEnvironmentRepository extends AbstractScmEnvironmentRepository
 
 	private static final String LOCAL_BRANCH_REF_PREFIX = "refs/remotes/origin/";
 
+	private static final int NB_MILLISECONDSIN_IN_SECONDS = 1000;
+
 	/**
 	 * Timeout (in seconds) for obtaining HTTP or SSH connection (if applicable). Default
 	 * 5 seconds.
@@ -471,7 +473,7 @@ public class JGitEnvironmentRepository extends AbstractScmEnvironmentRepository
 		boolean shouldPull;
 
 		if (this.refreshRate < 0 || (this.refreshRate > 0
-				&& System.currentTimeMillis() - this.lastRefresh < (this.refreshRate * 1000))) {
+				&& System.currentTimeMillis() - this.lastRefresh < (this.refreshRate * NB_MILLISECONDSIN_IN_SECONDS))) {
 			return false;
 		}
 
