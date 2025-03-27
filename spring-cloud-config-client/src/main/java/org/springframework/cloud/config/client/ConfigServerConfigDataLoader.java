@@ -106,9 +106,10 @@ public class ConfigServerConfigDataLoader implements ConfigDataLoader<ConfigServ
 		return doLoad(context, resource);
 	}
 
-	public ConfigData doLoad(ConfigDataLoaderContext context , ConfigServerConfigDataResource resource){
+	public ConfigData doLoad(ConfigDataLoaderContext context, ConfigServerConfigDataResource resource) {
 		configClientProperties properties = resource.getProperties();
 		List<PropertySource<?>> propertySources = new ArrayList<>();
+
 		try {
 			String[] labels = labels(properties);
 			String state = ConfigClientStateHolder.getState();
@@ -124,20 +125,23 @@ public class ConfigServerConfigDataLoader implements ConfigDataLoader<ConfigServ
 				}
 			}
 			throw new ConfigClientFailFastException("None of labels " + Arrays.toString(labels) + " found");
-		} catch (Exception e){
-			caseFailure(e,properties,resource);
+		}
+		catch (Exception e) {
+			caseFailure(e, properties, resource);
 			return null;
 		}
 	}
-	private String[] labels(ConfigClientProperties properties){
+
+	private String[] labels(ConfigClientProperties properties) {
 		String labelProperty = properties.getLabel();
-		if(!properties.isSendAllLabels() && StringUtils.hasText(labelProperty)){
+		if (!properties.isSendAllLabels() && StringUtils.hasText(labelProperty)) {
 			return StringUtils.commaDelimitedListToStringArray(labelProperty);
 		}
-		return new String[]{ StringUtils.hasText(labelProperty) ? labelProperty : ""};
+		return new String[]{StringUtils.hasText(labelProperty) ? labelProperty : ""};
 	}
-	private void propertySources(Environment result , List<PropertySource<?>> propertySources){
-		if ( result.getPropertySources() != null ) {
+
+	private void propertySources(Environment result, List<PropertySource<?>> propertySources) {
+		if (result.getPropertySources() != null) {
 			for (org.springframework.cloud.config.environment.PropertySource source : result.getPropertySources()) {
 				@SuppressWarnings("unchecked")
 				Map<String, Object> map = translateOrigins(source.getName(),
@@ -147,203 +151,197 @@ public class ConfigServerConfigDataLoader implements ConfigDataLoader<ConfigServ
 
 			}
 		}
-			HashMap<String, Object> map = new HashMap<>();
-			if (StringUtils.hasText(result.getState())) {
-				putValue(map, "config.client.state", result.getState());
-			}
-			if (StringUtils.hasText(result.getVersion())) {
-				putValue(map, "config.client.version", result.getVersion());
-			}
-			propertySources.add(0, new MapPropertySource(CONFIG_CLIENT_PROPERTYSOURCE_NAME, map));
+		HashMap<String, Object> map = new HashMap<>();
+		if (StringUtils.hasText(result.getState())) {
+			putValue(map, "config.client.state", result.getState());
 		}
-
-		private ConfigData makeConfigData(List<PropertySource<?>> propertySources , ConfigServerConfigDataResource resource){
-			return switch (ALL_OPTIONS.size()){
-				case 1 -> new ConfigData(propertySources);
-				case 2 -> new ConfigData(propertySources, Option.IGNORE_IMPORTS,Option.IGNORE_PROFILES);
-				default -> createConfigDataManyOptions(propertySources,resource);
-			};
+		if (StringUtils.hasText(result.getVersion())) {
+			putValue(map, "config.client.version", result.getVersion());
 		}
-		private ConfigData createAdvancedConfigData(List<PropertySource<?>> propertySources , ConfigServerConfigDataResource resource){
-			return new ConfigData(propertySources, propertySource -> {
-				String propertySourceName = propertySource.getName();
-				List<Option> options = new ArrayList<>();
-				options.add(Option.IGNORE_IMPORTS);
-				// TODO: the profile is now available on the backend
-				// in a future minor, add the profile associated with a
-				// PropertySource see
-				// https://github.com/spring-cloud/spring-cloud-config/issues/1874
-				for (String profile : resource.getAcceptedProfiles()) {
-					// TODO: switch to match
-					// , is used as a profile-separator for property sources
-					// from vault
-					// - is the default profile-separator for property sources
-					// TODO This is error prone logic see
-					// https://github.com/spring-cloud/spring-cloud-config/issues/2291
-					// When we see the overrides property source name we
-					// should always prioritize those
-					// properties over everything else, even profile specific
-					// property sources so also
-					// label this property source profile specific.
-					if (OVERRIDES_NAME.equals(propertySourceName) || (!DEFAULT_PROFILE.equals(profile)
-						&& propertySourceName.matches(".*[-,]" + profile + "\\b.*"))) {
-						// // TODO: switch to Options.with() when implemented
-						options.add(Option.PROFILE_SPECIFIC);
-						options.add(Option.IGNORE_PROFILES);
-					}
-				}
-				return ConfigData.Options.of(options.toArray(new Option[0]));
-			});
-		}
-
-
-		private void caseFailure(Exception e , ConfigClientProperties properties , ConfigServerConfigDataResource resource){
-		    if(shouldFailFast((properties,resource)){
-				throw new ConfigClientFailException("could not locate propertySource",e);
-			}
-		}
-
-		private void generateException(Exception e){
-		    if(e instanceof HttpServerErrorException httpException && MediaType.APPLICATION_JSON.includes(httpException.getResponseHeaders().getContentType())){
-			     return httpException.getResponseBodyAsString();
-		    }
-		    return e.getMessage();
-		}
-		private boolean shouldFailFast(ConfigClientProperties properties , ConfigServerConfigDataResource resource){
-		    return properties.isFailFast() || !resource.isOptional();
-		}
-
-
-
-
-
-
-
-
-
-/**
-	public ConfigData doLoad(ConfigDataLoaderContext context, ConfigServerConfigDataResource resource) {
-
-		ConfigClientProperties properties = resource.getProperties();
-		List<PropertySource<?>> propertySources = new ArrayList<>();
-		Exception error = null;
-		String errorBody = null;
-		try {
-			String labelProperty = properties.getLabel();
-			String[] labels;
-			if (!properties.isSendAllLabels() && StringUtils.hasText(labelProperty)) {
-				labels = StringUtils.commaDelimitedListToStringArray(labelProperty);
-			}
-			else {
-				// This could contain a comma separated list of labels sent directly to
-				// the config server
-				// For this to work you would need to be using a config server version of
-				// 4.2.0 or later
-				labels = new String[] { StringUtils.hasText(labelProperty) ? labelProperty : "" };
-			}
-			String state = ConfigClientStateHolder.getState();
-			for (String label : labels) {
-				Environment result = getRemoteEnvironment(context, resource, label.trim(), state);
-				if (result != null) {
-					log(result);
-
-					// result.getPropertySources() can be null if using xml
-					if (result.getPropertySources() != null) {
-						for (org.springframework.cloud.config.environment.PropertySource source : result
-							.getPropertySources()) {
-							@SuppressWarnings("unchecked")
-							Map<String, Object> map = translateOrigins(source.getName(),
-									(Map<String, Object>) source.getSource());
-							propertySources.add(0,
-									new OriginTrackedMapPropertySource("configserver:" + source.getName(), map, true));
-						}
-					}
-
-					HashMap<String, Object> map = new HashMap<>();
-					if (StringUtils.hasText(result.getState())) {
-						putValue(map, "config.client.state", result.getState());
-					}
-					if (StringUtils.hasText(result.getVersion())) {
-						putValue(map, "config.client.version", result.getVersion());
-					}
-					// the existence of this property source confirms a successful
-					// response from config server
-					propertySources.add(0, new MapPropertySource(CONFIG_CLIENT_PROPERTYSOURCE_NAME, map));
-					if (ALL_OPTIONS.size() == 1) {
-						// boot 2.4.2 and prior
-						return new ConfigData(propertySources);
-					}
-					else if (ALL_OPTIONS.size() == 2) {
-						// boot 2.4.3 and 2.4.4
-						return new ConfigData(propertySources, Option.IGNORE_IMPORTS, Option.IGNORE_PROFILES);
-					}
-					else if (ALL_OPTIONS.size() > 2) {
-						// boot 2.4.5+
-						return new ConfigData(propertySources, propertySource -> {
-							String propertySourceName = propertySource.getName();
-							List<Option> options = new ArrayList<>();
-							options.add(Option.IGNORE_IMPORTS);
-							// TODO: the profile is now available on the backend
-							// in a future minor, add the profile associated with a
-							// PropertySource see
-							// https://github.com/spring-cloud/spring-cloud-config/issues/1874
-							for (String profile : resource.getAcceptedProfiles()) {
-								// TODO: switch to match
-								// , is used as a profile-separator for property sources
-								// from vault
-								// - is the default profile-separator for property sources
-								// TODO This is error prone logic see
-								// https://github.com/spring-cloud/spring-cloud-config/issues/2291
-								// When we see the overrides property source name we
-								// should always prioritize those
-								// properties over everything else, even profile specific
-								// property sources so also
-								// label this property source profile specific.
-								if (OVERRIDES_NAME.equals(propertySourceName) || (!DEFAULT_PROFILE.equals(profile)
-										&& propertySourceName.matches(".*[-,]" + profile + "\\b.*"))) {
-									// // TODO: switch to Options.with() when implemented
-									options.add(Option.PROFILE_SPECIFIC);
-									options.add(Option.IGNORE_PROFILES);
-								}
-							}
-							return ConfigData.Options.of(options.toArray(new Option[0]));
-						});
-					}
-				}
-			}
-			errorBody = String.format("None of labels %s found", Arrays.toString(labels));
-		}
-		catch (HttpServerErrorException e) {
-			error = e;
-			if (MediaType.APPLICATION_JSON.includes(e.getResponseHeaders().getContentType())) {
-				errorBody = e.getResponseBodyAsString();
-			}
-		}
-		catch (Exception e) {
-			error = e;
-		}
-		if (properties.isFailFast() || !resource.isOptional()) {
-			String reason;
-			if (properties.isFailFast()) {
-				reason = "the fail fast property is set";
-			}
-			else {
-				reason = "the resource is not optional";
-			}
-			throw new ConfigClientFailFastException("Could not locate PropertySource and " + reason + ", failing"
-					+ (errorBody == null ? "" : ": " + errorBody), error);
-		}
-		logger.warn("Could not locate PropertySource (" + resource + "): "
-				+ (error != null ? error.getMessage() : errorBody));
-		return null;
+		propertySources.add(0, new MapPropertySource(CONFIG_CLIENT_PROPERTYSOURCE_NAME, map));
 	}
 
-*/
+	private ConfigData makeConfigData(List<PropertySource<?>> propertySources, ConfigServerConfigDataResource resource) {
+		return switch (ALL_OPTIONS.size()) {
+			case 1 -> new ConfigData(propertySources);
+			case 2 -> new ConfigData(propertySources, Option.IGNORE_IMPORTS, Option.IGNORE_PROFILES);
+			default -> createConfigDataManyOptions(propertySources, resource);
+		};
+	}
+
+	private ConfigData createAdvancedConfigData(List<PropertySource<?>> propertySources, ConfigServerConfigDataResource resource) {
+		return new ConfigData(propertySources, propertySource -> {
+			String propertySourceName = propertySource.getName();
+			List<Option> options = new ArrayList<>();
+			options.add(Option.IGNORE_IMPORTS);
+			// TODO: the profile is now available on the backend
+			// in a future minor, add the profile associated with a
+			// PropertySource see
+			// https://github.com/spring-cloud/spring-cloud-config/issues/1874
+			for (String profile : resource.getAcceptedProfiles()) {
+				// TODO: switch to match
+				// , is used as a profile-separator for property sources
+				// from vault
+				// - is the default profile-separator for property sources
+				// TODO This is error prone logic see
+				// https://github.com/spring-cloud/spring-cloud-config/issues/2291
+				// When we see the overrides property source name we
+				// should always prioritize those
+				// properties over everything else, even profile specific
+				// property sources so also
+				// label this property source profile specific.
+				if (OVERRIDES_NAME.equals(propertySourceName) || (!DEFAULT_PROFILE.equals(profile)
+					&& propertySourceName.matches(".*[-,]" + profile + "\\b.*"))) {
+					// // TODO: switch to Options.with() when implemented
+					options.add(Option.PROFILE_SPECIFIC);
+					options.add(Option.IGNORE_PROFILES);
+				}
+			}
+			return ConfigData.Options.of(options.toArray(new Option[0]));
+		});
+	}
+
+
+	private void caseFailure(Exception e, ConfigClientProperties properties, ConfigServerConfigDataResource resource) {
+		if (shouldFailFast(properties, resource)) {
+			throw new ConfigClientFailException("could not locate propertySource", e);
+		}
+	}
+
+	private void generateException(Exception e) {
+		if (e instanceof HttpServerErrorException httpException && MediaType.APPLICATION_JSON.includes(httpException.getResponseHeaders().getContentType())) {
+			return httpException.getResponseBodyAsString();
+		}
+		return e.getMessage();
+	}
+
+	private boolean shouldFailFast(ConfigClientProperties properties, ConfigServerConfigDataResource resource) {
+		return properties.isFailFast() || !resource.isOptional();
+	}
+
+
+	/**
+	 * public ConfigData doLoad(ConfigDataLoaderContext context, ConfigServerConfigDataResource resource) {
+	 * <p>
+	 * ConfigClientProperties properties = resource.getProperties();
+	 * List{@code<<PropertySource<?>>}propertySources = new ArrayList<>();
+	 * Exception error = null;
+	 * String errorBody = null;
+	 * try {
+	 * String labelProperty = properties.getLabel();
+	 * String[] labels;
+	 * if (!properties.isSendAllLabels() && StringUtils.hasText(labelProperty)) {
+	 * labels = StringUtils.commaDelimitedListToStringArray(labelProperty);
+	 * }
+	 * else {
+	 * // This could contain a comma separated list of labels sent directly to
+	 * // the config server
+	 * // For this to work you would need to be using a config server version of
+	 * // 4.2.0 or later
+	 * labels = new String[] { StringUtils.hasText(labelProperty) ? labelProperty : "" };
+	 * }
+	 * String state = ConfigClientStateHolder.getState();
+	 * for (String label : labels) {
+	 * Environment result = getRemoteEnvironment(context, resource, label.trim(), state);
+	 * if (result != null) {
+	 * log(result);
+	 * <p>
+	 * // result.getPropertySources() can be null if using xml
+	 * if (result.getPropertySources() != null) {
+	 * for (org.springframework.cloud.config.environment.PropertySource source : result
+	 * .getPropertySources()) {
+	 *{@code
+	 @SuppressWarnings("unchecked") Map<String, Object> map = translateOrigins(source.getName(),
+	 * (Map<String, Object>) source.getSource());}
+	 * propertySources.add(0,
+	 * new OriginTrackedMapPropertySource("configserver:" + source.getName(), map, true));
+	 * }
+	 * }
+	 * <p>
+	 * HashMap<String, Object> map = new HashMap<>();
+	 * if (StringUtils.hasText(result.getState())) {
+	 * putValue(map, "config.client.state", result.getState());
+	 * }
+	 * if (StringUtils.hasText(result.getVersion())) {
+	 * putValue(map, "config.client.version", result.getVersion());
+	 * }
+	 * // the existence of this property source confirms a successful
+	 * // response from config server
+	 * propertySources.add(0, new MapPropertySource(CONFIG_CLIENT_PROPERTYSOURCE_NAME, map));
+	 * if (ALL_OPTIONS.size() == 1) {
+	 * // boot 2.4.2 and prior
+	 * return new ConfigData(propertySources);
+	 * }
+	 * else if (ALL_OPTIONS.size() == 2) {
+	 * // boot 2.4.3 and 2.4.4
+	 * return new ConfigData(propertySources, Option.IGNORE_IMPORTS, Option.IGNORE_PROFILES);
+	 * }
+	 * else if (ALL_OPTIONS.size() > 2) {
+	 * // boot 2.4.5+
+	 * return new ConfigData(propertySources, propertySource -> {
+	 * String propertySourceName = propertySource.getName();
+	 * List<Option> options = new ArrayList<>();
+	 * options.add(Option.IGNORE_IMPORTS);
+	 * // TODO: the profile is now available on the backend
+	 * // in a future minor, add the profile associated with a
+	 * // PropertySource see
+	 * // https://github.com/spring-cloud/spring-cloud-config/issues/1874
+	 * for (String profile : resource.getAcceptedProfiles()) {
+	 * // TODO: switch to match
+	 * // , is used as a profile-separator for property sources
+	 * // from vault
+	 * // - is the default profile-separator for property sources
+	 * // TODO This is error prone logic see
+	 * // https://github.com/spring-cloud/spring-cloud-config/issues/2291
+	 * // When we see the overrides property source name we
+	 * // should always prioritize those
+	 * // properties over everything else, even profile specific
+	 * // property sources so also
+	 * // label this property source profile specific.
+	 * if (OVERRIDES_NAME.equals(propertySourceName) || (!DEFAULT_PROFILE.equals(profile)
+	 * && propertySourceName.matches(".*[-,]" + profile + "\\b.*"))) {
+	 * // // TODO: switch to Options.with() when implemented
+	 * options.add(Option.PROFILE_SPECIFIC);
+	 * options.add(Option.IGNORE_PROFILES);
+	 * }
+	 * }
+	 * return ConfigData.Options.of(options.toArray(new Option[0]));
+	 * });
+	 * }
+	 * }
+	 * }
+	 * errorBody = String.format("None of labels %s found", Arrays.toString(labels));
+	 * }
+	 * catch (HttpServerErrorException e) {
+	 * error = e;
+	 * if (MediaType.APPLICATION_JSON.includes(e.getResponseHeaders().getContentType())) {
+	 * errorBody = e.getResponseBodyAsString();
+	 * }
+	 * }
+	 * catch (Exception e) {
+	 * error = e;
+	 * }
+	 * if (properties.isFailFast() || !resource.isOptional()) {
+	 * String reason;
+	 * if (properties.isFailFast()) {
+	 * reason = "the fail fast property is set";
+	 * }
+	 * else {
+	 * reason = "the resource is not optional";
+	 * }
+	 * throw new ConfigClientFailFastException("Could not locate PropertySource and " + reason + ", failing"
+	 * + (errorBody == null ? "" : ": " + errorBody), error);
+	 * }
+	 * logger.warn("Could not locate PropertySource (" + resource + "): "
+	 * + (error != null ? error.getMessage() : errorBody));
+	 * return null;
+	 * }
+	 */
 	protected void log(Environment result) {
 		if (logger.isInfoEnabled()) {
 			logger.info(String.format("Located environment: name=%s, profiles=%s, label=%s, version=%s, state=%s",
-					result.getName(), result.getProfiles() == null ? "" : Arrays.asList(result.getProfiles()),
-					result.getLabel(), result.getVersion(), result.getState()));
+				result.getName(), result.getProfiles() == null ? "" : Arrays.asList(result.getProfiles()),
+				result.getLabel(), result.getVersion(), result.getState()));
 		}
 		if (logger.isDebugEnabled()) {
 			List<org.springframework.cloud.config.environment.PropertySource> propertySourceList = result
@@ -354,7 +352,7 @@ public class ConfigServerConfigDataLoader implements ConfigDataLoader<ConfigServ
 					propertyCount += propertySource.getSource().size();
 				}
 				logger.debug(String.format("Environment %s has %d property sources with %d properties.",
-						result.getName(), result.getPropertySources().size(), propertyCount));
+					result.getName(), result.getPropertySources().size(), propertyCount));
 			}
 
 		}
@@ -370,7 +368,7 @@ public class ConfigServerConfigDataLoader implements ConfigDataLoader<ConfigServ
 				Map<String, Object> value = (Map<String, Object>) entry.getValue();
 				if (value.size() == 2 && value.containsKey("origin") && value.containsKey("value")) {
 					Origin origin = new ConfigServicePropertySourceLocator.ConfigServiceOrigin(name,
-							value.get("origin"));
+						value.get("origin"));
 					OriginTrackedValue trackedValue = OriginTrackedValue.of(value.get("value"), origin);
 					withOrigins.put(entry.getKey(), trackedValue);
 					hasOrigin = true;
@@ -391,7 +389,7 @@ public class ConfigServerConfigDataLoader implements ConfigDataLoader<ConfigServ
 	}
 
 	protected Environment getRemoteEnvironment(ConfigDataLoaderContext context, ConfigServerConfigDataResource resource,
-			String label, String state) {
+											   String label, String state) {
 		ConfigClientProperties properties = resource.getProperties();
 		RestTemplate restTemplate = context.getBootstrapContext().get(RestTemplate.class);
 
@@ -419,11 +417,11 @@ public class ConfigServerConfigDataLoader implements ConfigDataLoader<ConfigServ
 			logger.info("Multiple Config Server Urls found listed.");
 		}
 
-		Object[] args = new String[] { name, profile };
+		Object[] args = new String[]{name, profile};
 		if (StringUtils.hasText(label)) {
 			// workaround for Spring MVC matching / in paths
 			label = Environment.denormalize(label);
-			args = new String[] { name, profile, label };
+			args = new String[]{name, profile, label};
 			path = path + "/{label}";
 		}
 		ResponseEntity<Environment> response = null;
@@ -464,11 +462,10 @@ public class ConfigServerConfigDataLoader implements ConfigDataLoader<ConfigServ
 
 				final HttpEntity<Void> entity = new HttpEntity<>((Void) null, headers);
 				response = restTemplate.exchange(uri + path, HttpMethod.GET, entity, Environment.class, args);
-			}
-			catch (HttpClientErrorException | HttpServerErrorException e) {
+			} catch (HttpClientErrorException | HttpServerErrorException e) {
 				if (i < noOfUrls - 1 && properties.getMultipleUriStrategy() == MultipleUriStrategy.ALWAYS) {
 					logger.info("Failed to fetch configs from server at  : " + uri
-							+ ". Will try the next url if available. Error : " + e.getMessage());
+						+ ". Will try the next url if available. Error : " + e.getMessage());
 					continue;
 				}
 
@@ -499,7 +496,7 @@ public class ConfigServerConfigDataLoader implements ConfigDataLoader<ConfigServ
 
 	@Deprecated
 	protected void addAuthorizationToken(ConfigClientProperties configClientProperties, HttpHeaders httpHeaders,
-			String username, String password) {
+										 String username, String password) {
 	}
 
 }
