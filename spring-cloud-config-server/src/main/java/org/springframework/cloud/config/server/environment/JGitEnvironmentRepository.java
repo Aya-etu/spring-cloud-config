@@ -759,28 +759,5 @@ public class JGitEnvironmentRepository extends AbstractScmEnvironmentRepository
 	 * Wraps the static method calls to {@link org.eclipse.jgit.api.Git} and
 	 * {@link org.eclipse.jgit.api.CloneCommand} allowing for easier unit testing.
 	 */
-	public static class JGitFactory {
-
-		private final boolean cloneSubmodules;
-
-		public JGitFactory() {
-			this(false);
-		}
-
-		public JGitFactory(boolean cloneSubmodules) {
-			this.cloneSubmodules = cloneSubmodules;
-		}
-
-		public Git getGitByOpen(File file) throws IOException {
-			Git git = Git.open(file);
-			return git;
-		}
-
-		public CloneCommand getCloneCommandByCloneRepository() {
-			CloneCommand command = Git.cloneRepository().setCloneSubmodules(cloneSubmodules);
-			return command;
-		}
-
-	}
 
 }
