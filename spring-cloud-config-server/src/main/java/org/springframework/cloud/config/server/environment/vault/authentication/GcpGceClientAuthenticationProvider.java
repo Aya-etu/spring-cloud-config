@@ -32,6 +32,7 @@ public class GcpGceClientAuthenticationProvider extends SpringVaultClientAuthent
 		super(AuthenticationMethod.GCP_GCE);
 	}
 
+	@SuppressWarnings("deprecation")
 	@Override
 	public ClientAuthentication getClientAuthentication(VaultEnvironmentProperties vaultProperties,
 			RestOperations vaultRestOperations, RestOperations externalRestOperations) {

@@ -1453,7 +1453,7 @@ public class JGitEnvironmentRepositoryTests {
 
 	}
 
-	class MockGitFactory extends JGitEnvironmentRepository.JGitFactory {
+	class MockGitFactory extends JGitFactory {
 
 		private Git mockGit;
 

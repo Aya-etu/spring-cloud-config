@@ -114,7 +114,7 @@ public class JGitEnvironmentRepository extends AbstractScmEnvironmentRepository
 	 */
 	private boolean cloneOnStart;
 
-	private JGitEnvironmentRepository.JGitFactory gitFactory;
+	private JGitFactory gitFactory;
 
 	private String defaultLabel;
 

@@ -188,7 +188,7 @@ public class JGitEnvironmentRepositoryConcurrencyTests {
 
 	}
 
-	private static class DelayedGitFactoryMock extends JGitEnvironmentRepository.JGitFactory {
+	private static class DelayedGitFactoryMock extends JGitFactory {
 
 		@Override
 		public Git getGitByOpen(File file) throws IOException {
