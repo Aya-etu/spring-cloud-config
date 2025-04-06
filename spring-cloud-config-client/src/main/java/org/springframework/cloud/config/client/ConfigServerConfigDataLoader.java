@@ -204,7 +204,8 @@ public class ConfigServerConfigDataLoader implements ConfigDataLoader<ConfigServ
 
 	private void caseFailure(Exception e, ConfigClientProperties properties, ConfigServerConfigDataResource resource) {
 		if (shouldFailFast(properties, resource)) {
-			throw new ConfigClientFailFastException("could not locate propertySource", e);
+			throw new ConfigClientFailFastException(
+					"Could not locate PropertySource and the fail fast property is set, failing", e);
 		}
 	}
 

@@ -214,8 +214,8 @@ public class ConfigServerConfigDataLoaderTests {
 		when(bootstrapContext.get(RestTemplate.class)).thenReturn(restTemplate);
 		ConfigClientFailFastException exception = Assertions.assertThrows(ConfigClientFailFastException.class,
 				() -> this.loader.load(context, resource));
-		assertThat(exception.getMessage()).contains(
-				"fail fast property is set, failing: None of labels [WeSetUpToReturn_NOT_FOUND_ForThisLabel] found");
+		assertThat(exception.getMessage())
+			.contains("Could not locate PropertySource and the fail fast property is set, failing");
 	}
 
 	@Test
@@ -234,6 +234,7 @@ public class ConfigServerConfigDataLoaderTests {
 		ClientHttpRequestFactory requestFactory = mock(ClientHttpRequestFactory.class);
 		ClientHttpRequest request = mock(ClientHttpRequest.class);
 		when(requestFactory.createRequest(any(URI.class), any(HttpMethod.class))).thenReturn(request);
+		when(bootstrapContext.get(RestTemplate.class)).thenReturn(new RestTemplate(requestFactory));
 		properties.setFailFast(true);
 		properties.setUsername("username");
 		properties.setPassword("password");
