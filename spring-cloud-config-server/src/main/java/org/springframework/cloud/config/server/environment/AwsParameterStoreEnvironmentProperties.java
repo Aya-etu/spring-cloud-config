@@ -23,7 +23,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.cloud.config.server.support.EnvironmentRepositoryProperties;
 import org.springframework.validation.annotation.Validated;
 
 /**
@@ -31,30 +30,15 @@ import org.springframework.validation.annotation.Validated;
  */
 @Validated
 @ConfigurationProperties("spring.cloud.config.server.awsparamstore")
-public class AwsParameterStoreEnvironmentProperties implements EnvironmentRepositoryProperties {
+public class AwsParameterStoreEnvironmentProperties extends EnvironmentProperties {
 
 	static final String DEFAULT_PATH_SEPARATOR = "/";
 
 	private static final String DEFAULT_ORIGIN = "aws:ssm:parameter:";
 
-	private static final String DEFAULT_PREFIX = DEFAULT_PATH_SEPARATOR + "config";
-
 	private static final String DEFAULT_PROFILE_SEPARATOR = "-";
 
-	/**
-	 * The order of the environment repository.
-	 */
-	private int order = DEFAULT_ORDER;
-
-	/**
-	 * The region to be used by the AWS Parameter Store client.
-	 */
-	private String region;
-
-	/**
-	 * The service endpoint to be used by the AWS Parameter Store client.
-	 */
-	private String endpoint;
+	private static final String DEFAULT_PREFIX = DEFAULT_PATH_SEPARATOR + "config";
 
 	/**
 	 * Prefix indicating the property's origin. Defaults to "aws:ssm:parameter:".
@@ -100,53 +84,12 @@ public class AwsParameterStoreEnvironmentProperties implements EnvironmentReposi
 	@Max(10)
 	private int maxResults = 10;
 
-	public int getOrder() {
-		return order;
-	}
-
-	@Override
-	public void setOrder(int order) {
-		this.order = order;
-	}
-
-	public String getRegion() {
-		return region;
-	}
-
-	public void setRegion(String region) {
-		this.region = region;
-	}
-
-	public String getEndpoint() {
-		return endpoint;
-	}
-
-	public void setEndpoint(String endpoint) {
-		this.endpoint = endpoint;
-	}
-
-	public String getOrigin() {
-		return origin;
-	}
-
-	public void setOrigin(String origin) {
-		this.origin = origin;
-	}
-
 	public String getPrefix() {
 		return prefix;
 	}
 
 	public void setPrefix(String prefix) {
 		this.prefix = prefix;
-	}
-
-	public String getProfileSeparator() {
-		return profileSeparator;
-	}
-
-	public void setProfileSeparator(String profileSeparator) {
-		this.profileSeparator = profileSeparator;
 	}
 
 	public boolean isRecursive() {

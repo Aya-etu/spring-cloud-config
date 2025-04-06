@@ -20,13 +20,12 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.cloud.config.server.support.EnvironmentRepositoryProperties;
 
 /**
  * @author Tejas Pandilwar
  */
 @ConfigurationProperties("spring.cloud.config.server.aws-secretsmanager")
-public class AwsSecretsManagerEnvironmentProperties implements EnvironmentRepositoryProperties {
+public class AwsSecretsManagerEnvironmentProperties extends EnvironmentProperties {
 
 	static final String DEFAULT_PATH_SEPARATOR = "/";
 
@@ -35,17 +34,6 @@ public class AwsSecretsManagerEnvironmentProperties implements EnvironmentReposi
 	private static final String DEFAULT_PROFILE_SEPARATOR = "-";
 
 	private static final String DEFAULT_ORIGIN = "aws:secrets:";
-
-	/**
-	 * The region to be used by AWS Secrets Manager client.
-	 */
-	private String region;
-
-	/**
-	 * The endpoint to be used by AWS Secrets Manager client. This can be used to specify
-	 * an alternate endpoint for the API requests.
-	 */
-	private String endpoint;
 
 	/**
 	 * The default staging label to be used to fetch the secret values. If unset, an
@@ -57,11 +45,6 @@ public class AwsSecretsManagerEnvironmentProperties implements EnvironmentReposi
 	 * Do not set staging label when fetching the secret values.
 	 */
 	private boolean ignoreLabel;
-
-	/**
-	 * The order of the environment repository.
-	 */
-	private int order = DEFAULT_ORDER;
 
 	/**
 	 * Prefix indicating first level for every property loaded from AWS Secrets Manager.
@@ -85,22 +68,6 @@ public class AwsSecretsManagerEnvironmentProperties implements EnvironmentReposi
 	@NotNull
 	private String origin = DEFAULT_ORIGIN;
 
-	public String getRegion() {
-		return region;
-	}
-
-	public void setRegion(String region) {
-		this.region = region;
-	}
-
-	public String getEndpoint() {
-		return endpoint;
-	}
-
-	public void setEndpoint(String endpoint) {
-		this.endpoint = endpoint;
-	}
-
 	public String getDefaultLabel() {
 		return defaultLabel;
 	}
@@ -117,37 +84,12 @@ public class AwsSecretsManagerEnvironmentProperties implements EnvironmentReposi
 		this.ignoreLabel = ignoreLabel;
 	}
 
-	public int getOrder() {
-		return order;
-	}
-
-	@Override
-	public void setOrder(int order) {
-		this.order = order;
-	}
-
 	public String getPrefix() {
 		return prefix;
 	}
 
 	public void setPrefix(String prefix) {
 		this.prefix = prefix;
-	}
-
-	public String getProfileSeparator() {
-		return profileSeparator;
-	}
-
-	public void setProfileSeparator(String profileSeparator) {
-		this.profileSeparator = profileSeparator;
-	}
-
-	public String getOrigin() {
-		return origin;
-	}
-
-	public void setOrigin(String origin) {
-		this.origin = origin;
 	}
 
 }

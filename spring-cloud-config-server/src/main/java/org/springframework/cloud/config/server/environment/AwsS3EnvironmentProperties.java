@@ -17,23 +17,12 @@
 package org.springframework.cloud.config.server.environment;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.cloud.config.server.support.EnvironmentRepositoryProperties;
 
 /**
  * @author Clay McCoy
  */
 @ConfigurationProperties("spring.cloud.config.server.awss3")
-public class AwsS3EnvironmentProperties implements EnvironmentRepositoryProperties {
-
-	/**
-	 * AWS region that contains config.
-	 */
-	private String region;
-
-	/**
-	 * Adds the ability to override the baseUrl of the s3 client.
-	 */
-	private String endpoint;
+public class AwsS3EnvironmentProperties extends EnvironmentProperties {
 
 	/**
 	 * Name of the S3 bucket that contains config.
@@ -45,24 +34,6 @@ public class AwsS3EnvironmentProperties implements EnvironmentRepositoryProperti
 	 * {application}` from Git backend.
 	 */
 	private boolean useDirectoryLayout;
-
-	private int order = DEFAULT_ORDER;
-
-	public String getRegion() {
-		return region;
-	}
-
-	public void setRegion(String region) {
-		this.region = region;
-	}
-
-	public String getEndpoint() {
-		return endpoint;
-	}
-
-	public void setEndpoint(String endpoint) {
-		this.endpoint = endpoint;
-	}
 
 	public String getBucket() {
 		return bucket;
@@ -78,15 +49,6 @@ public class AwsS3EnvironmentProperties implements EnvironmentRepositoryProperti
 
 	public void setUseDirectoryLayout(boolean useDirectoryLayout) {
 		this.useDirectoryLayout = useDirectoryLayout;
-	}
-
-	public int getOrder() {
-		return order;
-	}
-
-	@Override
-	public void setOrder(int order) {
-		this.order = order;
 	}
 
 }

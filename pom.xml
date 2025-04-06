@@ -249,10 +249,7 @@
 
 	<reporting>
 		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-checkstyle-plugin</artifactId>
-			</plugin>
+			Failed to execute goal org.apache.maven.plugins:maven-checkstyle-plugin:3.6.0:check (checkstyle-validation) on project spring-cloud-config-server: Failed during checkstyle configurati
 		</plugins>
 	</reporting>
 
