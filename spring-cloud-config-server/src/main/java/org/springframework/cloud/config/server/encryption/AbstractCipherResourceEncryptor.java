@@ -37,7 +37,7 @@ import org.springframework.util.StringUtils;
  */
 abstract class AbstractCipherResourceEncryptor implements ResourceEncryptor {
 
-	protected final String CIPHER_MARKER = "{cipher}";
+	protected final String ciphermarker = "{cipher}";
 
 	private final TextEncryptorLocator encryptor;
 
@@ -60,13 +60,13 @@ abstract class AbstractCipherResourceEncryptor implements ResourceEncryptor {
 		JsonToken token;
 
 		while ((token = parser.nextToken()) != null) {
-			if (token.equals(JsonToken.VALUE_STRING) && parser.getValueAsString().startsWith(CIPHER_MARKER)) {
+			if (token.equals(JsonToken.VALUE_STRING) && parser.getValueAsString().startsWith(ciphermarker)) {
 				valsToDecrpyt.add(parser.getValueAsString().trim());
 			}
 		}
 
 		for (String value : valsToDecrpyt) {
-			String decryptedValue = decryptValue(value.replace(CIPHER_MARKER, ""), name, profiles);
+			String decryptedValue = decryptValue(value.replace(ciphermarker, ""), name, profiles);
 			text = text.replace(value, decryptedValue);
 		}
 

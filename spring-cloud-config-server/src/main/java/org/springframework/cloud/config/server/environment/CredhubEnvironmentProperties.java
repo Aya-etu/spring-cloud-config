@@ -17,7 +17,6 @@
 package org.springframework.cloud.config.server.environment;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
-import org.springframework.cloud.config.server.support.EnvironmentRepositoryProperties;
 
 /**
  * @author Alberto C. Ríos
