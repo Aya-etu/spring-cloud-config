@@ -97,12 +97,6 @@ public class ConfigServerConfigDataCustomizationIntegrationTests {
 		return new CustomRestTemplate(custom);
 	}
 
-	@SpringBootConfiguration
-	@EnableAutoConfiguration
-	static class TestConfig {
-
-	}
-
 	static class Interceptor implements LoaderInterceptor {
 
 		boolean applied;
@@ -178,6 +172,12 @@ public class ConfigServerConfigDataCustomizationIntegrationTests {
 				}
 			});
 		}
+
+	}
+
+	@SpringBootConfiguration
+	@EnableAutoConfiguration
+	static class TestConfig {
 
 	}
 
