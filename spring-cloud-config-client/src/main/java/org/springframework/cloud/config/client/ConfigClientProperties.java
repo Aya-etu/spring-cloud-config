@@ -41,7 +41,11 @@ import org.springframework.web.util.UriComponentsBuilder;
  */
 @ConfigurationProperties(ConfigClientProperties.PREFIX)
 public class ConfigClientProperties {
-
+	private static final int SECONDS_IN_ONE_MINUTE = 60;
+	private static final int MILLISECONDS_IN_ONE_SECOND = 1000;
+	private static final int READ_TIMEOUT_MINUTES = 3;
+	private static final int READ_TIMEOUT_SECONDS = 5;
+	private static final int CONNECT_TIMEOUT_SECONDS = 10;
 	/**
 	 * Prefix for Spring Cloud Config properties.
 	 */
@@ -161,12 +165,12 @@ public class ConfigClientProperties {
 	/**
 	 * timeout on waiting to read data from the Config Server.
 	 */
-	private int requestReadTimeout = (60 * 1000 * 3) + 5000;
+	private int requestReadTimeout = (SECONDS_IN_ONE_MINUTE * MILLISECONDS_IN_ONE_SECOND * READ_TIMEOUT_MINUTES) + READ_TIMEOUT_SECONDS*MILLISECONDS_IN_ONE_SECOND;
 
 	/**
 	 * timeout on waiting to connect to the Config Server.
 	 */
-	private int requestConnectTimeout = 1000 * 10;
+	private int requestConnectTimeout = MILLISECONDS_IN_ONE_SECOND * CONNECT_TIMEOUT_SECONDS;
 
 	/**
 	 * Flag to indicate whether to send state. Default true.
